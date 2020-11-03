@@ -1,23 +1,20 @@
 const express = require('express');
 const jwt = require("jsonwebtoken");
-const passport = require('passport')
-const LocalStrategy = require("passport-local").Strategy;
 const dotenv = require('dotenv');
-const bcrypt = require('bcrypt')
-const { User } = require('../entities/user');
+let jsonData = require('../users.json');
 const router = express.Router();
 
 dotenv.config();
 
 router.post('/',async (req,res)=>{
-    let user = await User.findOne({ email: req.body.email});
-    if(!user) {return res.status(400).send('Invalid email or password');}
-
-    const validPassword = await bcrypt.compare(req.body.password, user.password);
-    console.log(validPassword)
+    let user = jsonData.filter(obj => {
+        return obj.email == req.body.email
+      })
+      if(!user[0]){return res.status(400).send("Invalid email or password")}
+    if(user[0].password != req.body.password)
     if(!validPassword) return res.status(400).send('Invalid email or password');
 
-   const token = user.generateAuthToken();
+    const token = jwt.sign({_id: user[0]._id, username: user[0].username}, process.env.JWT_PRIVATE_KEY);
 
     res.send(token);
 })
